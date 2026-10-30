@@ -25,4 +25,7 @@ public class Product extends BaseModel{
     private String slug;
 
     private Category category;
+
+    // this field is added to learn DTO concept
+    private Boolean isPrimeSaleDiscountSpecific; // sensitive field
 }
