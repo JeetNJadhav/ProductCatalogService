@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class ProductMapper {
@@ -16,7 +17,7 @@ public class ProductMapper {
     public Product toEntity(ProductDto productDto) {
         Product product = new Product();
 
-        product.setId(productDto.getId());
+        product.setId(new UUID(0L, productDto.getId()));
         product.setName(productDto.getName());
         product.setPrice(productDto.getPrice());
         product.setBrand(productDto.getBrand());
@@ -29,7 +30,7 @@ public class ProductMapper {
         for (ProductImageDto imageDto : productDto.getImages()) {
             ProductImage image = new ProductImage();
 
-            image.setId(imageDto.getId());
+            image.setId(new UUID(0L, imageDto.getId()));
             image.setUrl(imageDto.getUrl());
             image.setAltText(imageDto.getAltText());
             image.setDisplayOrder(imageDto.getDisplayOrder());
@@ -46,7 +47,7 @@ public class ProductMapper {
         for (ProductSpecificationDto specDto : productDto.getSpecifications()) {
             ProductSpecification spec = new ProductSpecification();
 
-            spec.setId(specDto.getId());
+            spec.setId(new UUID(0L, specDto.getId()));
             spec.setName(specDto.getName());
             spec.setValue(specDto.getValue());
             spec.setGroupName(specDto.getGroupName());
@@ -57,17 +58,19 @@ public class ProductMapper {
 
         product.setSpecifications(specifications);
 
-        // Map Category
-        if (productDto.getCategory() != null) {
-            Category category = new Category();
+        // Map Categories
+        if (productDto.getCategories() != null) {
+            for (CategoryDto categoryDto : productDto.getCategories()) {
+                Category category = new Category();
 
-            category.setId(productDto.getCategory().getId());
-            category.setName(productDto.getCategory().getName());
-            category.setDescription(productDto.getCategory().getDescription());
-            category.setImageUrl(productDto.getCategory().getImageUrl());
-            category.setSlug(productDto.getCategory().getSlug());
+                category.setId(new UUID(0L, categoryDto.getId()));
+                category.setName(categoryDto.getName());
+                category.setDescription(categoryDto.getDescription());
+                category.setImageUrl(categoryDto.getImageUrl());
+                category.setSlug(categoryDto.getSlug());
 
-            product.setCategory(category);
+                product.getCategories().add(category);
+            }
         }
 
         return product;
@@ -75,7 +78,7 @@ public class ProductMapper {
 
     public ProductDto toDto(Product product) {
         ProductDto productDto = new ProductDto();
-        productDto.setId(product.getId());
+        productDto.setId(product.getId().getLeastSignificantBits());
         productDto.setName(product.getName());
         productDto.setDescription(product.getDescription());
         productDto.setPrice(product.getPrice());
@@ -85,12 +88,19 @@ public class ProductMapper {
         productDto.setImages(toImageDtos(product.getImages()));
         productDto.setSpecifications(toSpecDtos(product.getSpecifications()));
 
-        if (product.getCategory() != null) {
-            CategoryDto categoryDto = new CategoryDto();
-            categoryDto.setId(product.getCategory().getId());
-            categoryDto.setName(product.getCategory().getName());
-            categoryDto.setDescription(product.getCategory().getDescription());
-            productDto.setCategory(categoryDto);
+        if (product.getCategories() != null) {
+            List<CategoryDto> categoryDtos = new ArrayList<>();
+
+            for (Category category : product.getCategories()) {
+                CategoryDto categoryDto = new CategoryDto();
+
+                categoryDto.setId(category.getId().getLeastSignificantBits());
+                categoryDto.setName(category.getName());
+                categoryDto.setDescription(category.getDescription());
+
+                categoryDtos.add(categoryDto);
+            }
+            productDto.setCategories(categoryDtos);
         }
         return productDto;
     }
@@ -99,7 +109,7 @@ public class ProductMapper {
         List<ProductImageDto> imageDtos = new ArrayList<>();
         for (ProductImage image : images) {
             ProductImageDto imageDto = new ProductImageDto();
-            imageDto.setId(image.getId());
+            imageDto.setId(image.getId().getLeastSignificantBits());
             imageDto.setUrl(image.getUrl());
             imageDto.setAltText(image.getAltText());
             imageDto.setDisplayOrder(image.getDisplayOrder());
@@ -113,7 +123,7 @@ public class ProductMapper {
         List<ProductSpecificationDto> specDtos = new ArrayList<>();
         for (ProductSpecification spec : specs) {
             ProductSpecificationDto specDto = new ProductSpecificationDto();
-            specDto.setId(spec.getId());
+            specDto.setId(spec.getId().getLeastSignificantBits());
             specDto.setName(spec.getName());
             specDto.setValue(spec.getValue());
             specDto.setGroupName(spec.getGroupName());
@@ -127,13 +137,13 @@ public class ProductMapper {
 
         FakeStoreProductDto dto = new FakeStoreProductDto();
 
-        dto.setId(product.getId());
+        dto.setId(product.getId().getLeastSignificantBits());
         dto.setTitle(product.getName());
         dto.setPrice(product.getPrice());
         dto.setDescription(product.getDescription());
 
-        if (product.getCategory() != null) {
-            dto.setCategory(product.getCategory().getName());
+        if (product.getCategories() != null) {
+            dto.setCategory(product.getCategories().get(0).getName());
         }
 
         if (product.getImages() != null && !product.getImages().isEmpty()) {
@@ -147,7 +157,7 @@ public class ProductMapper {
 
         Product product = new Product();
 
-        product.setId(dto.getId());
+        product.setId(new UUID(0L, dto.getId()));
         product.setName(dto.getTitle());
         product.setDescription(dto.getDescription());
         product.setPrice(dto.getPrice());
@@ -161,7 +171,7 @@ public class ProductMapper {
         Category category = new Category();
         category.setName(dto.getCategory());
 
-        product.setCategory(category);
+        product.getCategories().add(category);
         product.getImages().add(productImage);
 
         return product;

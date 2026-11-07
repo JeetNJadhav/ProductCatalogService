@@ -1,6 +1,7 @@
 package com.example.productcatalog.client;
 
 import com.example.productcatalog.dtos.FakeStoreProductDto;
+import com.example.productcatalog.models.Product;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
@@ -65,6 +66,18 @@ public class FakeStoreApiClient {
         }
 
         return new FakeStoreProductDto[0];
+    }
+
+    public FakeStoreProductDto replaceProduct(Long id, FakeStoreProductDto fakeStoreProductDtoInput){
+        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity = requestForEntity(HttpMethod.PUT,
+                "https://fakestoreapi.com/products/{id}",
+                fakeStoreProductDtoInput, FakeStoreProductDto.class, id);
+
+        if(validateResponse(fakeStoreProductDtoResponseEntity)) {
+            return fakeStoreProductDtoResponseEntity.getBody();
+        }
+
+        return null;
     }
 
 }

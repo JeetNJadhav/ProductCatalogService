@@ -29,5 +29,5 @@ public class ProductDto {
 
     private String slug;
 
-    private CategoryDto category;
+    private List<CategoryDto> categories = new ArrayList<>();
 }

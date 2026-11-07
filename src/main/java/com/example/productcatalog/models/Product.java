@@ -1,5 +1,6 @@
 package com.example.productcatalog.models;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,14 +10,13 @@ import java.util.List;
 
 @Getter
 @Setter
+@Entity
 public class Product extends BaseModel{
+
+    @Column(nullable = false)
     private String name;
 
     private String description;
-
-    private List<ProductImage> images = new ArrayList<>(); // replace it with
-
-    private List<ProductSpecification> specifications = new ArrayList<>();
 
     private BigDecimal price;
 
@@ -24,8 +24,17 @@ public class Product extends BaseModel{
 
     private String slug;
 
-    private Category category;
+    @ManyToMany
+    @JoinTable(
+            name = "product_categories",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private List<Category> categories = new ArrayList<>();
 
-    // this field is added to learn DTO concept
-    private Boolean isPrimeSaleDiscountSpecific; // sensitive field
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductImage> images = new ArrayList<>(); // replace it with
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductSpecification> specifications = new ArrayList<>();
 }
