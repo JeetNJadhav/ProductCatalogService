@@ -69,17 +69,14 @@ public class ProductService implements IProductService{
     @Override
     public Product replaceProduct(Long id, Product inputProduct) {
         FakeStoreProductDto fakeStoreProductDtoInput = productMapper.toFakeStoreDto(inputProduct);
-        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity = requestForEntity(HttpMethod.PUT,
-                "https://fakestoreapi.com/products/{id}",
-                fakeStoreProductDtoInput, FakeStoreProductDto.class, id);
 
-        if (fakeStoreProductDtoResponseEntity.hasBody() &&
-                fakeStoreProductDtoResponseEntity.getStatusCode()
-                        .equals(HttpStatusCode.valueOf(200))) {
-            return productMapper.toProduct(fakeStoreProductDtoResponseEntity.getBody());
+        FakeStoreProductDto fakeStoreProductDto = fakeStoreApiClient.replaceProduct(id, fakeStoreProductDtoInput);
+
+        if(fakeStoreProductDto == null){
+            return null;
         }
 
-        return null;
+        return productMapper.toProduct(fakeStoreProductDto);
     }
 
     private <T> ResponseEntity<T> requestForEntity(HttpMethod httpMethod, String url, @Nullable Object request, Class<T> responseType, Object... uriVariables) throws RestClientException {
