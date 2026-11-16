@@ -9,11 +9,12 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
 public class ProductDto {
-    private Long id;
+    private String id;
 
     private String name;
 

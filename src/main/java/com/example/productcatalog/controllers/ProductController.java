@@ -1,10 +1,7 @@
 package com.example.productcatalog.controllers;
 
 import com.example.productcatalog.dtos.ProductDto;
-import com.example.productcatalog.mapper.ProductMapper;
-import com.example.productcatalog.models.Product;
 import com.example.productcatalog.services.IProductService;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,67 +12,64 @@ import java.util.List;
 //singleton object -> bean
 //container (spring context)  in which beans are stored
 
+/**
+ * Single REST entry point for products. Depends only on IProductService, so it does
+ * not know (or care) whether MySQL or FakeStore is the active source. IDs are Strings;
+ * the active service converts and validates them.
+ */
 @RestController
 @RequestMapping("/products")
 public class ProductController {
 
-    // Field injection (not recommended): dependency is hidden, can't be final, hard to unit test
-    // @Autowired
-    // private IProductService productService;
+    private static final int MAX_BATCH_SIZE = 100;
 
-    // Constructor injection (recommended): explicit, final/immutable, easy to test, fails fast
+    // Constructor injection: Spring injects the one IProductService bean that matched
+    // catalog.product-source at startup.
     private final IProductService productService;
-    private final ProductMapper productMapper;
 
-    public ProductController(IProductService productService, ProductMapper productMapper) {
+    public ProductController(IProductService productService) {
         this.productService = productService;
-        this.productMapper = productMapper;
     }
 
-    @GetMapping()
+    @GetMapping
     public ResponseEntity<List<ProductDto>> getAllProducts() {
-        List<Product> products = productService.getAllProducts();
-
-        List<ProductDto> productDtos = new ArrayList<>();
-        for (Product product : products) {
-            productDtos.add(productMapper.toDto(product));
-        }
-
-        return new ResponseEntity<>(productDtos, HttpStatus.OK);
+        return ResponseEntity.ok(productService.getAllProducts());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductDto> getProductById(@PathVariable("id") Long productId) {
-        if (productId <= 0L) {
-            throw new IllegalArgumentException("Please try with productId > 0");
-        }
-        Product product = productService.getProductById(productId);
-
-        // MultiValueMap deprecated so using httpHeaders
-        // MultiValueMap<String,String> headers = new LinkedMultiValueMap<>();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("X-Called-By","Jeet Jadhav");
-
-        if (product == null) {
-            // return new ResponseEntity<>(null,headers, HttpStatus.NOT_FOUND);
-            throw  new RuntimeException("Product is not available");
-        }
-
-        ProductDto productDto = productMapper.toDto(product);
-        return new ResponseEntity<>(productDto, headers, HttpStatus.OK);
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductDto> getProductById(@PathVariable("productId") String productId) {
+        return ResponseEntity.ok(productService.getProductById(productId));
     }
 
-    @PostMapping()
-    public ProductDto createProduct(@RequestBody ProductDto productDto) {
-        return productDto;
+    @PostMapping("/by-ids")
+    public ResponseEntity<List<ProductDto>> getAllProductsById(@RequestBody List<String> productIds) {
+
+        if (productIds == null || productIds.isEmpty()) {
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+
+        if (productIds.size() > MAX_BATCH_SIZE) {
+            throw new IllegalArgumentException("Batch size exceeds limit of " + MAX_BATCH_SIZE);
+        }
+
+        return ResponseEntity.ok(productService.getAllProductsById(productIds));
     }
 
-    @PutMapping("{id}")
-    public ProductDto replaceProduct(@PathVariable Long id, @RequestBody ProductDto input) {
-        Product inputProduct = productMapper.toEntity(input);
-        Product response = productService.replaceProduct(id, inputProduct);
-        if(response == null) return null;
-        return productMapper.toDto(response);
+    @PostMapping
+    public ResponseEntity<ProductDto> addProduct(@RequestBody ProductDto productDto) {
+        return new ResponseEntity<>(productService.addProduct(productDto), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{productId}")
+    public ResponseEntity<ProductDto> replaceProduct(
+            @PathVariable("productId") String productId,
+            @RequestBody ProductDto productDto) {
+        return ResponseEntity.ok(productService.replaceProduct(productId, productDto));
+    }
+
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<Void> deleteProductById(@PathVariable("productId") String productId) {
+        productService.deleteProductById(productId);
+        return ResponseEntity.noContent().build();
     }
 }
